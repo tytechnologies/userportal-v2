@@ -1,0 +1,137 @@
+name: User Portal Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Optional commit SHA to deploy (staging or production)"
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Setup SSH For Staging
+        if: github.ref == 'refs/heads/staging'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.REMOTE_SERVER_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan 13.229.242.15 >> ~/.ssh/known_hosts
+
+      - name: Setup SSH For Production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.REMOTE_SERVER_SSH_PRIVATE_KEY_PROD }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan 54.151.246.166 >> ~/.ssh/known_hosts
+
+      - name: Debug Prod SSH Connection
+        if: github.ref == 'refs/heads/main'
+        run: |
+          ssh -i ~/.ssh/id_rsa -vvv ubuntu@54.151.246.166 "echo 'Connection successful!'"
+
+      # -------------------------------------
+      # DEPLOY TO REMOTE SERVER (STAGING)
+      # -------------------------------------
+      - name: Deploy to remote staging server
+        if: github.ref == 'refs/heads/feature/cookie-session'
+        run: |
+          COMMIT="${{ github.event.inputs.commit }}"
+          echo "Commit input: $COMMIT"
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.229.242.15 "
+            cd /home/ubuntu/housing-interactive-user-portal
+
+            echo 'Fetching latest code...'
+            git fetch origin
+
+            if [ -n \"$COMMIT\" ]; then
+              echo '>>> Deploying specific commit: $COMMIT'
+              git checkout $COMMIT || exit 1
+            else
+              echo '>>> No commit provided. Deploying latest origin/staging'
+              git checkout staging
+              git reset --hard origin/staging
+            fi
+
+            echo 'Cleaning old build...'
+            rm -rf .output/public
+
+            echo 'Loading Node environment...'
+            export NVM_DIR=\"\$HOME/.nvm\"
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+
+            echo 'Installing dependencies...'
+            corepack enable
+            pnpm install --frozen-lockfile
+
+            echo 'Building the app...'
+            pnpm build
+
+            echo 'Restarting PM2...'
+            pm2 stop hi-user || true
+            pm2 delete hi-user || true
+            pm2 start \"export PORT=3003 && node .output/server/index.mjs\" --name hi-user
+          "
+
+      # -------------------------------------
+      # DEPLOY TO REMOTE SERVER (PRODUCTION)
+      # -------------------------------------
+      - name: Deploy to remote production server
+        if: github.ref == 'refs/heads/main'
+        run: |
+          COMMIT="${{ github.event.inputs.commit }}"
+          echo "Commit input: $COMMIT"
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@54.151.246.166 "
+            cd /home/ubuntu/housing-interactive-user-portal
+
+            echo 'Fetching latest code...'
+            git fetch origin
+
+            if [ -n \"$COMMIT\" ]; then
+              echo '>>> Deploying specific commit: $COMMIT'
+              git checkout $COMMIT || exit 1
+            else
+              echo '>>> No commit provided. Deploying latest origin/main'
+              git checkout main
+              git reset --hard origin/main
+            fi
+
+            echo 'Cleaning old build...'
+            rm -rf .output/public
+
+            echo 'Loading Node environment...'
+            export NVM_DIR=\"\$HOME/.nvm\"
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+
+            echo 'Installing dependencies...'
+            corepack enable
+            pnpm install --frozen-lockfile
+
+            echo 'Building the app...'
+            pnpm build
+
+            echo 'Restarting PM2...'
+            pm2 stop hi-user || true
+            pm2 delete hi-user || true
+            pm2 start \"export PORT=3003 && node .output/server/index.mjs\" --name hi-user
+          "

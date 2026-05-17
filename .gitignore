@@ -1,0 +1,18 @@
+node_modules
+*.log*
+.nuxt
+.nitro
+.cache
+.output
+.env*
+backup.*
+dist
+package-lock.json
+checkpdfcoord.py
+
+# Per-developer editor / agent session config (not for the repo)
+.claude/
+
+# Local test env (kept out of repo); test sources under tests/ are tracked.
+tests/env.js
+env.js

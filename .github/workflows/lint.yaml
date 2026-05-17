@@ -1,0 +1,134 @@
+name: Lint & validate
+
+# Runs on every PR + push to main/staging. Cheap (no build) so it
+# gates merges without slowing down the deploy pipeline. Add new
+# fast-feedback checks here (token guard, schema drift detector,
+# typecheck once it's stable, etc.) as the codebase evolves.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  design-tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # The token guard has zero npm dependencies (pure node), so we
+      # don't need to install the lockfile to run it. This keeps the
+      # job sub-15-second.
+      - name: Design-token guard
+        run: node scripts/check-design-tokens.mjs
+
+  typecheck:
+    # Best-effort: nuxt typecheck pulls vue-tsc and the full TS server,
+    # which can be flaky during refactors. continue-on-error so a
+    # transient red doesn't block PRs while the suite stabilizes.
+    # Promote to a hard gate by removing continue-on-error once green.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Nuxt prepare (generates .nuxt types)
+        run: pnpm postinstall
+      - name: Type-check
+        run: pnpm typecheck
+
+  test:
+    # Same caveat as typecheck — vitest config touches Nuxt server
+    # bindings that may not import cleanly in CI without env. Keep
+    # non-blocking until stabilized.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Vitest
+        run: pnpm test:run
+
+  # The first hard gate. Catches Vite/Vue template parse errors and
+  # Rollup resolution failures — the class of bug that ate hours of
+  # this branch (Library-mode template, missing import paths). This
+  # IS blocking; a red build means no merge.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Build (client + server)
+        # NODE_ENV=production strips dev-only console.* calls via the
+        # esbuild.pure config in nuxt.config.ts. Mirrors what the live
+        # deploy does, so CI catches anything that breaks under it.
+        env:
+          NODE_ENV: production
+        run: pnpm build
+
+  # Asserts the lockfile is in sync with package.json. If a contributor
+  # bumps a dep but forgets to commit the lockfile, this job fails. Also
+  # catches the silent semver drift case that started this whole branch.
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Frozen lockfile check
+        run: pnpm install --frozen-lockfile

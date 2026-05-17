@@ -1,0 +1,480 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+ * Design tokens — "Operations" light + "Warm Graphite" dark.
+ *
+ * Light mode (`:root`) is the calm slate-cool Operations palette
+ * tuned for dense operational dashboards (Linear / Stripe / Vercel).
+ *
+ * Dark mode (`.dark`) is Warm Graphite (2026-05-12): brown-tinted
+ * dark with gold as the brand hero, electric blue demoted to links,
+ * state colors retuned warmer to fit. See
+ * `docs/superpowers/specs/2026-05-12-warm-graphite-dark-mode-design.md`.
+ *
+ * Token NAMES stay stable so all 368 tokenized files inherit changes
+ * without hand-edits. Token VALUES change. The "brass" token is
+ * kept as an alias of `--primary` so legacy `bg-brass` usages still
+ * read as the single brand accent (no rainbow).
+ *
+ * Surface system:
+ *   --background        page chrome (lightest)
+ *   --card / --surface-1   standard panel (1 step up from chrome)
+ *   --surface-2         elevated panel (cards-on-cards, sticky bars)
+ *   --popover / --surface-3  highest elevation (modals, dropdowns)
+ *
+ * Borders:
+ *   --border            standard hairline
+ *   --border-strong     defined separator (table headers, sticky bars)
+ *
+ * State colors are restrained, single-accent (no candy / rainbow).
+ * Tailwind hooks tokens via `hsl(var(--color-*) / <alpha-value>)` so
+ * opacity utilities like `bg-primary/80` keep working.
+ * ============================================================ */
+@layer base {
+  :root {
+    /* ----- Surfaces (light) ---------------------------------- */
+    /* page chrome: cool near-white slate (#F5F7FA) — calm, neutral */
+    --background: 220 20% 97%;
+    --foreground: 220 25% 11%;       /* near-black ink, slightly cool */
+
+    /* standard panel: pure white. Sits 1 step above the page chrome
+     * so cards have crisp separation without any shadow at all. */
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 11%;
+    --surface-1: 0 0% 100%;
+    --surface-1-foreground: 220 25% 11%;
+
+    /* elevated panel (cards-on-cards, sticky toolbars, table headers).
+     * Same cool slate as background but slightly different from card
+     * so a sticky toolbar reads as "above" the body content. */
+    --surface-2: 220 18% 95%;
+    --surface-2-foreground: 220 25% 11%;
+
+    /* popover / modal / dropdown — pure white with a stronger shadow
+     * provided by the .surface-3 component class below. */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 11%;
+    --surface-3: 0 0% 100%;
+    --surface-3-foreground: 220 25% 11%;
+
+    /* ----- Brand + state ------------------------------------- */
+    /* primary: deep institutional slate (#1E2A3A). Restrained, calm,
+     * reads as "operational" rather than "marketing blue". */
+    --primary: 217 31% 17%;
+    --primary-foreground: 0 0% 100%;
+
+    /* "brass" is kept as a token name for back-compat. Its value is
+     * now identical to primary — the entire app ships with ONE accent.
+     * Any legacy `bg-brass`/`text-brass` reads as the brand accent. */
+    --brass: 217 31% 17%;
+    --brass-foreground: 0 0% 100%;
+
+    /* secondary surface — used by some buttons / chips. Cool slate. */
+    --secondary: 220 16% 93%;
+    --secondary-foreground: 220 25% 18%;
+
+    /* muted: subtle backgrounds (table headers, filter chips, code).
+     * muted-foreground: secondary text (timestamps, hints, metadata). */
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 9% 38%;
+
+    /* accent: the hover state for nav / table rows / list items. */
+    --accent: 220 14% 92%;
+    --accent-foreground: 220 25% 18%;
+
+    /* destructive: deep red, defined enough to read at small sizes */
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* success: forest green — restrained, not lime */
+    --success: 158 55% 26%;
+    --success-foreground: 0 0% 100%;
+
+    /* warning: amber — pulled toward orange, not yellow */
+    --warning: 32 80% 42%;
+    --warning-foreground: 0 0% 100%;
+
+    /* ----- Borders + focus ----------------------------------- */
+    --border: 220 13% 88%;          /* defined steel hairline */
+    --border-strong: 220 13% 80%;   /* used by sticky toolbars */
+    --input: 220 13% 86%;           /* slightly darker than border */
+    --ring: 217 31% 17%;            /* matches primary for focus */
+
+    /* ----- Geometry ------------------------------------------ */
+    /* Tighter radius. Enterprise software lives at 4-8px corners,
+     * not 16-24px. Buttons / inputs use 6px; panels use 8px. */
+    --radius: 0.375rem;
+  }
+
+  .dark {
+    /* ----- Surfaces (dark) — Warm Graphite (2026-05-12) -------- */
+    /* Brown-tinted dark with gold as the brand hero. State colors
+     * retuned warmer to fit. Light/dark brand polarity: light primary
+     * is institutional slate, dark primary is gold — same swap-polarity
+     * pattern as before, different destination color. */
+    --background: 36 13% 7%;          /* #14130F */
+    --foreground: 38 28% 93%;         /* #F4EFE5 — warm cream */
+
+    --card: 34 13% 11%;               /* #1E1B16 */
+    --card-foreground: 38 28% 93%;
+    --surface-1: 34 13% 11%;
+    --surface-1-foreground: 38 28% 93%;
+
+    --surface-2: 32 14% 14%;          /* #28241E */
+    --surface-2-foreground: 38 28% 93%;
+
+    --popover: 32 14% 16%;            /* #2D2922 */
+    --popover-foreground: 38 28% 93%;
+    --surface-3: 32 14% 16%;
+    --surface-3-foreground: 38 28% 93%;
+
+    /* In dark, primary swaps polarity to gold — the brand hero. */
+    --primary: 43 89% 63%;            /* #F5C84B */
+    --primary-foreground: 36 13% 7%;  /* dark text on gold buttons */
+    --brass: 43 89% 63%;
+    --brass-foreground: 36 13% 7%;
+
+    --secondary: 32 14% 18%;          /* #2F2A23 */
+    --secondary-foreground: 38 28% 93%;
+
+    --muted: 32 14% 14%;              /* #28241E */
+    --muted-foreground: 32 12% 60%;   /* #A39A8A */
+
+    --accent: 32 14% 20%;             /* #332E26 */
+    --accent-foreground: 38 28% 93%;
+
+    --destructive: 14 70% 56%;        /* #DE6442 — warm red */
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 150 50% 50%;           /* #40BF80 */
+    --success-foreground: 36 13% 7%;
+
+    --warning: 35 88% 60%;            /* #F2A33D */
+    --warning-foreground: 36 13% 7%;
+
+    --border: 33 14% 22%;             /* #3D372D */
+    --border-strong: 33 14% 28%;      /* #4E473A */
+    --input: 33 14% 22%;
+    --ring: 43 89% 63%;               /* gold focus ring */
+  }
+
+  /* Apply surface tokens at the root so any sliver of un-styled HTML
+   * (gaps between layout containers, full-bleed scroll regions) still
+   * matches the active theme — no flash of white inside dark mode. */
+  html,
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* ============================================================
+ * Design system — typography, surfaces, motion, density.
+ *
+ * Typography is operational sans (no editorial serif moment). Page
+ * titles are tighter / smaller than before — enterprise dashboards
+ * sit closer to data; magazines push titles big.
+ *
+ *   .text-page-title    — h1 of a top-level surface (24/32px)
+ *   .text-section-title — h2 of a section / card cluster (16/24px)
+ *   .text-card-title    — h3 of a single card (14/20px)
+ *   .text-eyebrow       — uppercase tiny label above a value
+ *   .text-metric-value  — large tabular number for KPI cards
+ *   .text-metric-delta  — small accent number under metrics
+ *   .text-body          — default body copy
+ *   .text-meta          — muted secondary text
+ *   .text-caption       — smallest meaningful text (timestamps, hints)
+ * ============================================================ */
+@layer components {
+  .text-page-title {
+    @apply text-[1.5rem] font-semibold leading-tight tracking-[-0.01em] text-foreground sm:text-[1.75rem];
+  }
+  .text-section-title {
+    @apply text-base font-semibold tracking-tight text-foreground;
+  }
+  .text-card-title {
+    @apply text-sm font-semibold text-foreground;
+  }
+  .text-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
+  }
+  .text-metric-value {
+    @apply text-2xl font-semibold tabular-nums tracking-tight text-foreground;
+  }
+  .text-metric-delta {
+    @apply text-xs font-medium tabular-nums;
+  }
+  .text-body {
+    @apply text-sm text-foreground;
+  }
+  .text-meta {
+    @apply text-xs text-muted-foreground;
+  }
+  .text-caption {
+    @apply text-[11px] text-muted-foreground;
+  }
+
+  /* Surface elevation. surface-1 = card, surface-2 = sticky / nested,
+   * surface-3 = floating overlay (modal / dropdown / popover). */
+  .surface-1 {
+    @apply bg-card text-card-foreground;
+  }
+  .surface-2 {
+    @apply bg-[hsl(var(--surface-2))] text-[hsl(var(--surface-2-foreground))];
+  }
+  .surface-3 {
+    @apply bg-[hsl(var(--surface-3))] text-[hsl(var(--surface-3-foreground))]
+           shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_32px_-8px_rgba(15,23,42,0.16)];
+  }
+
+  /* Card baseline used by every UI primitive. Tighter radius (8px),
+   * defined border, NO shadow by default (rely on the border to
+   * separate). Hover affordance reserved for interactive cards. */
+  .ui-card {
+    @apply rounded-lg border border-border bg-card text-card-foreground;
+  }
+  .ui-card-flush {
+    @apply overflow-hidden rounded-lg border border-border bg-card text-card-foreground;
+  }
+  .ui-card-interactive {
+    @apply ui-card transition-colors duration-100 ease-out hover:border-border-strong hover:bg-accent;
+  }
+
+  /* Defined separator. Use for sticky table headers, group dividers
+   * inside forms, and sidebar section breaks where the standard hair-
+   * line border isn't sturdy enough. */
+  .border-strong {
+    border-color: hsl(var(--border-strong));
+  }
+
+  /* Focus ring used by every interactive element. Token-based so it
+   * adapts to dark mode automatically. */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Sticky page-internal toolbars (search + filters + actions row).
+   * Sits above body content, below the global navbar. */
+  .toolbar-sticky {
+    @apply sticky top-14 z-20 border-b border-border-strong bg-card;
+  }
+
+  /* Solid button baselines. Prefer these to hand-rolled utility
+   * chains. ui-ux-pro-max enforces unified hover / focus / disabled. */
+  .btn-primary {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-md
+           bg-primary px-3.5 text-sm font-medium text-primary-foreground
+           transition-colors duration-100 ease-out
+           hover:bg-primary/90 active:bg-primary/95
+           disabled:cursor-not-allowed disabled:opacity-50
+           focus-ring;
+  }
+  .btn-secondary {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-md
+           border border-border bg-card px-3.5 text-sm font-medium text-foreground
+           transition-colors duration-100 ease-out
+           hover:bg-accent hover:border-border-strong active:bg-accent
+           disabled:cursor-not-allowed disabled:opacity-50
+           focus-ring;
+  }
+  .btn-ghost {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-md
+           px-3 text-sm font-medium text-muted-foreground
+           transition-colors duration-100 ease-out
+           hover:bg-accent hover:text-foreground
+           disabled:cursor-not-allowed disabled:opacity-50
+           focus-ring;
+  }
+  .btn-destructive {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-md
+           bg-destructive px-3.5 text-sm font-medium text-destructive-foreground
+           transition-colors duration-100 ease-out
+           hover:bg-destructive/90 active:bg-destructive/95
+           disabled:cursor-not-allowed disabled:opacity-50
+           focus-ring;
+  }
+}
+
+@layer base {
+  :root {
+    /* Motion — single source of truth for transition timing. */
+    --motion-fast: 100ms;
+    --motion-medium: 180ms;
+    --motion-slow: 280ms;
+    --motion-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+    --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Density rhythm — vertical spacing between major blocks. Tighter
+     * default than the prior editorial spacing. Operational dashboards
+     * fit more on one screen so operators don't scroll for status. */
+    --rhythm: 1.25rem;       /* space-y-5 default */
+    --rhythm-tight: 0.75rem; /* admin tables, dense lists */
+    --rhythm-loose: 1.5rem;  /* hero / onboarding-style pages */
+
+    /* Density anchors. Single source of truth for chrome dimensions
+     * so every page lands on the same vertical grid and sticky
+     * offsets stay synchronized when chrome resizes. */
+    --header-height: 3.5rem;     /* h-14 — global navbar */
+    --sidebar-width: 15rem;      /* w-60 — expanded sidebar */
+    --sidebar-collapsed: 4rem;   /* w-16 — collapsed sidebar */
+    --table-row-height: 2.25rem; /* 36px — compact data table */
+    --grid-gap: 0.75rem;         /* gap-3 — KPI grids */
+    --card-pad-tight: 0.75rem;   /* p-3 — compact cards */
+    --card-pad: 1rem;            /* p-4 — standard cards (was p-5) */
+  }
+}
+
+/* Respect the user's "reduce motion" OS setting (per WCAG 2.1
+ * Success Criterion 2.3.3 + Apple HIG / Material Design). When set,
+ * shorten every transition + animation to near-instant so pages
+ * still feel responsive without animating. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+ * Font faces — kept for back-compat. The Estate-era Fraunces serif
+ * is no longer loaded (no @font-face for it). The display family in
+ * tailwind.config.js falls back to the same sans stack as body so
+ * existing `.text-page-title` / `.text-section-title` rules still
+ * resolve, but render as operational sans.
+ * ============================================================ */
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT Book';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Book.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-BlackItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT ExtraBlack';
+    src: url('../fonts/circularxx-tt/CircularXXTT-ExtraBlackItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT Book';
+    src: url('../fonts/circularxx-tt/CircularXXTT-BookItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT ExtraBlack';
+    src: url('../fonts/circularxx-tt/CircularXXTT-ExtraBlack.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-ThinItalic.ttf') format('truetype');
+    font-weight: 100;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CircularXX TT';
+    src: url('../fonts/circularxx-tt/CircularXXTT-MediumItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
